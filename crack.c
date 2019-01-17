@@ -12,6 +12,7 @@
 
 #define _XOPEN_SOURCE
 #define ZERO 0
+#define MAX_LEN 160
 
 typedef unsigned long size_t;
 
@@ -35,10 +36,10 @@ void crackSingle(char *username, char *cryptPasswd, int pwlen, char *passwd) {
                 testString[0] = charSet[a];testString[1] = charSet[b];testString[2] = charSet[c];testString[3] = '\0';
                 char* hash = crypt(testString, salt);
                 if(strcmp(cryptPasswd, hash) == ZERO) {
-                    printf("%s \n", hash);
-                    printf("%s \n", cryptPasswd);
+                    //printf("%s \n", hash);
+                    //printf("%s \n", cryptPasswd);
                     stringcopy(passwd, testString);
-                    printf("%s \n", passwd);
+                    //printf("%s \n", passwd);
                     a = b = c = 100;
                 }
             }
@@ -61,7 +62,33 @@ void crackSingle(char *username, char *cryptPasswd, int pwlen, char *passwd) {
  * in the old-style /etc/passwd format file at pathe FNAME.
  */
 void crackMultiple(char *fname, int pwlen, char **passwds) {
+    FILE *in = fopen(fname, "r");
+    int peek, lineCount = 0;
+    char* username = malloc(MAX_LEN);
+    char* cryptPasswd = malloc(MAX_LEN);
+    char* ignored = malloc(MAX_LEN);
 
+    while(!feof(in)) {
+        peek = fgetc(in);
+        if(peek == '\n') {
+            lineCount++;
+        }
+    }
+    fclose(in);
+    in = fopen(fname, "r");
+
+    for(int i = 0; i < lineCount; i++) {
+        fscanf(in, "%[^:]%*c", username);
+        fscanf(in, "%[^:]%*c", cryptPasswd);
+        fscanf(in, "%[^\n]%*c", ignored);
+        //printf("%s%s%s \n", username, " : ", cryptPasswd);
+        crackSingle(username, cryptPasswd, pwlen, passwds[i]);
+    }
+
+    free(ignored);
+    free(cryptPasswd);
+    free(username);
+    fclose(in);
 } 
 
 /*
