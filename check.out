@@ -1,15 +1,28 @@
 CrackSingle...
-Elapsed: 0s
-CrackSingle: FAIL
+Cracked: four
+Elapsed: 7s
+CrackSingle: PASS
 CrackSpeedy...
-Cracked: 0 of 1
-Elapsed: 0s
-CrackSpeedy: FAIL
+Cracked: four
+Cracked: pand
+Cracked: terr
+Cracked: lock
+Cracked: bert
+Cracked: stel
+Cracked: 6 of 6
+Elapsed: 57s
+CrackSpeedy: PASS
 CrackMultiple...
-Cracked: 0 of 1
-Elapsed: 0s
-CrackMultiple: FAIL
+Cracked: four
+Cracked: pand
+Cracked: terr
+Cracked: lock
+Cracked: bert
+Cracked: stel
+Cracked: 6 of 6
+Elapsed: 58s
+CrackMultiple: PASS
 CrackStealthy...
-Elapsed: 0s
-Max CPU: 0.0%
+Elapsed: 1s
+Max CPU: 104.0%
 CrackStealthy: FAIL

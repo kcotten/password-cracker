@@ -9,71 +9,64 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 
-#define _XOPEN_SOURCE
 #define ZERO 0
 #define MAX_LEN 160
-
-typedef unsigned long size_t;
+#define FULLSET 62
+#define NUMSET  10
+#define ALPHSET 26
+#define SALT_LEN 2
+#define BREAK 100
 
 void * stringcopy(char *dest, const char *src);
 char * stringcopyN(char *dest, char *src, size_t n);
 int stringcompare(char* string1, char* string2);
+
+static const char fullCharSet[]  = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const char numCharSet[]   = "0123456789";
+static const char lowerCharSet[] = "abcdefghijklmnopqrstuvwxyz";
+static const char upperCharSet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 /*
  * Find the plain-text password PASSWD of length PWLEN for the user USERNAME 
  * given the encrypted password CRYPTPASSWD.
  */
 void crackSingle(char *username, char *cryptPasswd, int pwlen, char *passwd) {    
-    const char charSet[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const int sizeOfCharSet = 62;
-    char* salt = strndup(cryptPasswd, 2);
-    // brute force guess, first attempt
-    for (int a = 0; a < sizeOfCharSet; a++) {
-        for (int b = 0; b < sizeOfCharSet; b++) {
-            for (int c = 0; c < sizeOfCharSet; c++) {
+    char* salt = strndup(cryptPasswd, SALT_LEN);
+    
+    // brute force
+    for (int a = 0; a < FULLSET; a++) {
+        for (int b = 0; b < FULLSET; b++) {
+            for (int c = 0; c < FULLSET; c++) {
                 if (pwlen == 4) {
-                    //printf("here");
-                    for (int d = 0; d < sizeOfCharSet; d++) {
+                    for (int d = 0; d < FULLSET; d++) {
                         char testString[4];
-                        testString[0] = charSet[a]; testString[1] = charSet[b];
-                        testString[2] = charSet[c]; testString[3] = charSet[d]; testString[4] = '\0';
+                        testString[0] = fullCharSet[a]; testString[1] = fullCharSet[b];
+                        testString[2] = fullCharSet[c]; testString[3] = fullCharSet[d]; testString[4] = '\0';
                         char* hash = crypt(testString, salt);
                         if(strcmp(cryptPasswd, hash) == ZERO) {
-                            //printf("%s \n", hash);
-                            //printf("%s \n", cryptPasswd);
                             stringcopy(passwd, testString);
-                            //printf("%s \n", passwd);
-                            a = b = c = d = 100;
+                            a = b = c = d = BREAK;
                         }
                     }
                 } else if (pwlen == 3) {
                     char testString[3];
-                    testString[0] = charSet[a];testString[1] = charSet[b];testString[2] = charSet[c];testString[3] = '\0';
+                    testString[0] = fullCharSet[a]; testString[1] = fullCharSet[b];
+                    testString[2] = fullCharSet[c]; testString[3] = '\0';
                     char* hash = crypt(testString, salt);
                     if(strcmp(cryptPasswd, hash) == ZERO) {
-                        //printf("%s \n", hash);
-                        //printf("%s \n", cryptPasswd);
                         stringcopy(passwd, testString);
-                        //printf("%s \n", passwd);
-                        a = b = c = 100;
+                        a = b = c = BREAK;
                     }
                 } else {
                     printf("Password lengths of 3 and 4 supported only.\n");
+                    a = b = c = BREAK;
                 }
             }
         }
     }
- 
-
-    /* char* testString = "god";
-    char* hash = crypt(testString, salt);
-    if(strcmp(cryptPasswd, hash) == 0) {
-        printf("%s \n", "The hash is equal to the encryptd password, setting passwd.");
-        stringcopy(passwd, testString);
-        printf("%s \n", passwd);        
-    } */
-
+    free(salt);
 }
 
 /*
@@ -82,29 +75,18 @@ void crackSingle(char *username, char *cryptPasswd, int pwlen, char *passwd) {
  */
 void crackMultiple(char *fname, int pwlen, char **passwds) {
     FILE *in = fopen(fname, "r");
-    int peek, lineCount = 0;
+    int j = 0;
     char* username = malloc(MAX_LEN);
     char* cryptPasswd = malloc(MAX_LEN);
-    char* ignored = malloc(MAX_LEN);
+    char* ignoredChars = malloc(MAX_LEN);
 
-    while(!feof(in)) {
-        peek = fgetc(in);
-        if(peek == '\n') {
-            lineCount++;
-        }
-    }
-    fclose(in);
-    in = fopen(fname, "r");
-
-    for(int i = 0; i < lineCount; i++) {
-        fscanf(in, "%[^:]%*c", username);
+    while(fscanf(in, "%[^:]%*c", username) != EOF) {
         fscanf(in, "%[^:]%*c", cryptPasswd);
-        fscanf(in, "%[^\n]%*c", ignored);
-        //printf("%s%s%s \n", username, " : ", cryptPasswd);
-        crackSingle(username, cryptPasswd, pwlen, passwds[i]);
+        fscanf(in, "%[^\n]%*c", ignoredChars);
+        crackSingle(username, cryptPasswd, pwlen, passwds[j++]);
     }
 
-    free(ignored);
+    free(ignoredChars);
     free(cryptPasswd);
     free(username);
     fclose(in);
