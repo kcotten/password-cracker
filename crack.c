@@ -32,15 +32,34 @@ void crackSingle(char *username, char *cryptPasswd, int pwlen, char *passwd) {
     for (int a = 0; a < sizeOfCharSet; a++) {
         for (int b = 0; b < sizeOfCharSet; b++) {
             for (int c = 0; c < sizeOfCharSet; c++) {
-                char testString[3];
-                testString[0] = charSet[a];testString[1] = charSet[b];testString[2] = charSet[c];testString[3] = '\0';
-                char* hash = crypt(testString, salt);
-                if(strcmp(cryptPasswd, hash) == ZERO) {
-                    //printf("%s \n", hash);
-                    //printf("%s \n", cryptPasswd);
-                    stringcopy(passwd, testString);
-                    //printf("%s \n", passwd);
-                    a = b = c = 100;
+                if (pwlen == 4) {
+                    //printf("here");
+                    for (int d = 0; d < sizeOfCharSet; d++) {
+                        char testString[4];
+                        testString[0] = charSet[a]; testString[1] = charSet[b];
+                        testString[2] = charSet[c]; testString[3] = charSet[d]; testString[4] = '\0';
+                        char* hash = crypt(testString, salt);
+                        if(strcmp(cryptPasswd, hash) == ZERO) {
+                            //printf("%s \n", hash);
+                            //printf("%s \n", cryptPasswd);
+                            stringcopy(passwd, testString);
+                            //printf("%s \n", passwd);
+                            a = b = c = d = 100;
+                        }
+                    }
+                } else if (pwlen == 3) {
+                    char testString[3];
+                    testString[0] = charSet[a];testString[1] = charSet[b];testString[2] = charSet[c];testString[3] = '\0';
+                    char* hash = crypt(testString, salt);
+                    if(strcmp(cryptPasswd, hash) == ZERO) {
+                        //printf("%s \n", hash);
+                        //printf("%s \n", cryptPasswd);
+                        stringcopy(passwd, testString);
+                        //printf("%s \n", passwd);
+                        a = b = c = 100;
+                    }
+                } else {
+                    printf("Password lengths of 3 and 4 supported only.\n");
                 }
             }
         }
@@ -96,7 +115,7 @@ void crackMultiple(char *fname, int pwlen, char **passwds) {
  * in the old-style /etc/passwd format file at pathe FNAME.
  */
 void crackSpeedy(char *fname, int pwlen, char **passwds) {
-
+    crackMultiple(fname, pwlen, passwds);
 } 
 
 /*
@@ -105,7 +124,7 @@ void crackSpeedy(char *fname, int pwlen, char **passwds) {
  * percent of any processor.
  */
 void crackStealthy(char *username, char *cryptPasswd, int pwlen, char *passwd, int maxCpu) {
-
+    crackSingle(username, cryptPasswd, pwlen, passwd);
 }
 
 /* 
