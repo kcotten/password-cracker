@@ -29,7 +29,7 @@ typedef struct thread_data {
     int id;
     int pwlen;
     int pflag;
-    //char* charSet;
+    char* charSet;
     char* cryptPasswd;
     char* passwd;
     //char* testString;
@@ -43,7 +43,8 @@ int stringcompare(char* string1, char* string2);
 void* threadedCrack(void* arg);
 
 int flag = 0;
-//pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER;
+/*
 static pthread_mutex_t myMutex[NUMTHREADS] = {
     PTHREAD_MUTEX_INITIALIZER,
     PTHREAD_MUTEX_INITIALIZER,
@@ -52,6 +53,7 @@ static pthread_mutex_t myMutex[NUMTHREADS] = {
     PTHREAD_MUTEX_INITIALIZER,
     PTHREAD_MUTEX_INITIALIZER,
 };
+*/
 
 static const char *charSet[6] = {
     "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
@@ -191,12 +193,12 @@ void crackSpeedy(char *fname, int pwlen, char **passwds) {
         //data[j].testString = malloc(pwlen + 1);
         data[j].cryptPasswd = malloc(strlen(cryptPasswd));
         //data[j].hash = malloc(strlen(cryptPasswd));
-        //data[j].charSet = malloc(63);
+        data[j].charSet = malloc(63);
         memset(data[j].passwd, 0, pwlen + 1);
         //memset(data[j].testString, 0, pwlen + 1);
         memset(data[j].cryptPasswd, 0, strlen(cryptPasswd));
         //memset(data[j].hash, 0, strlen(cryptPasswd));
-        //strcpy(data[j].charSet, charSet[j]);
+        strcpy(data[j].charSet, charSet[j]);
         stringcopy(data[j].cryptPasswd, cryptPasswd);
         memset(data[j].salt, 0, 3);
         strcpy(data[j].salt, salt);
@@ -216,7 +218,7 @@ void crackSpeedy(char *fname, int pwlen, char **passwds) {
         free(data[i].cryptPasswd);
         free(data[i].passwd);
         //free(data[i].testString);
-        //free(data[i].charSet);
+        free(data[i].charSet);
         //free(data[i].hash);
     }
 
@@ -271,61 +273,40 @@ void* threadedCrack(void* args) {
     //crackSingle(NULL, data->cryptPasswd, data->pwlen, data->passwd);
     //char* testString = malloc(data->pwlen);
     printf("Thread %d crack <cryptPasswd = %s>\n", data->id, data->cryptPasswd);
-    for (int a = 0; a < (int) strlen(charSet[1]); a++) {
-        for (int b = 0; b < (int) strlen(charSet[1]); b++) {
-            for (int c = 0; c < (int) strlen(charSet[1]); c++) {
-                /*
-                if (flag == 1)
-                    a = b = c = BREAK;
-                */
+    printf("Thread %d salt and pwlen <salt = %s, pwlen = %d>\n", data->id, data->salt, data->pwlen);
+    for (int a = 0; a < (int) strlen(data->charSet); a++) {
+        for (int b = 0; b < (int) strlen(data->charSet); b++) {
+            for (int c = 0; c < (int) strlen(data->charSet); c++) {
+                
+                //if (flag == 1)
+                //    a = b = c = BREAK;
+                
                 if (data->pwlen == 4) {
-                    for (int d = 0; d < (int) strlen(charSet[1]); d++) {
+                    for (int d = 0; d < (int) strlen(data->charSet); d++) {
                         char testString[4];
-                        //char* testString = malloc(4);
-                        //pthread_mutex_lock( &myMutex );
-                        testString[0] = charSet[1][a]; testString[1] = charSet[1][b];
-                        testString[2] = charSet[1][c]; testString[3] = charSet[1][d]; testString[4] = '\0';
+                        testString[0] = data->charSet[a]; testString[1] = data->charSet[b];
+                        testString[2] = data->charSet[c]; testString[3] = data->charSet[d]; testString[4] = '\0';
+                        pthread_mutex_lock( &myMutex );
                         char* hash = crypt(testString, data->salt);
-                        //data->hash = crypt(data->testString, data->salt);
-                        //pthread_mutex_lock( &myMutex );
-                        data->pflag = strcmp(data->cryptPasswd, hash);
-                        //pthread_mutex_unlock( &myMutex );
-                        
-                        if( (strcmp(data->cryptPasswd, hash) == 0) && (data->pflag == 0) ) {
-                            //printf("Thread %d the strcmp was %d\n", data->id, strcmp(data->cryptPasswd, data->hash));
-                            //printf("Thread %d, the value of pflag was %d\n", data->id, data->pflag);
+                        if(strcmp(data->cryptPasswd, hash) == ZERO) {
                             printf("Thread %d, passwd is: %s\n", data->id, testString);
                             stringcopy(data->passwd, testString);
-                            //pthread_mutex_lock( &myMutex );
-                            //flag = 1;
-                            //pthread_mutex_unlock( &myMutex );
-                            //free(testString);
-                            a = b = c = d = BREAK;
-                            break;
+                            a = b = c = BREAK;
                         }
-                    }
+                        pthread_mutex_unlock( &myMutex );
+                    }                    
                 } else if (data->pwlen == 3) {
                     char testString[3];
-                    //pthread_mutex_lock( &myMutex );
-                    testString[0] = charSet[1][a]; testString[1] = charSet[1][b];
-                    testString[2] = charSet[1][c]; testString[3] = '\0';
+                    testString[0] = data->charSet[a]; testString[1] = data->charSet[b];
+                    testString[2] = data->charSet[c]; testString[3] = '\0';
+                    pthread_mutex_lock( &myMutex );
                     char* hash = crypt(testString, data->salt);
-                    //data->hash = crypt(data->testString, data->salt);
-                    //pthread_mutex_lock( &myMutex );
-                    pthread_mutex_lock( &myMutex[data->id] );
-                    data->pflag = strcmp(data->cryptPasswd, hash);
-                    pthread_mutex_lock( &myMutex[data->id] );
-
-                    if( (data->pflag == 0) /*&& (strcmp(data->cryptPasswd, hash) == 0)*/ ) {
-                        //printf("Thread %d the strcmp was %d\n", data->id, strcmp(data->cryptPasswd, data->hash));
-                        //printf("Thread %d, the value of pflag was %d\n", data->id, data->pflag);
-                        //printf("Setting passwd in thread %d to: %s\n", data->id, testString);
+                    if(strcmp(data->cryptPasswd, hash) == ZERO) {
+                        printf("Thread %d, passwd is: %s\n", data->id, testString);
                         stringcopy(data->passwd, testString);
-                        printf("Thread %d passwd is: %s\n", data->id, data->passwd);
-                        //flag = 1;
                         a = b = c = BREAK;
-                        break;
                     }
+                    pthread_mutex_unlock( &myMutex );
                 } else {
                     printf("Password lengths of 3 and 4 supported only.\n");
                     a = b = c = BREAK;
@@ -335,5 +316,6 @@ void* threadedCrack(void* args) {
         }
     }
     
+
     pthread_exit(NULL);
 }
