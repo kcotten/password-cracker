@@ -1,28 +1,29 @@
 CrackSingle...
-Cracked: zzyf
-Elapsed: 16s
+Cracked: Uz9Y
+Elapsed: 20s
 CrackSingle: PASS
 CrackSpeedy...
-Cracked: zzyf
-Cracked: pAnd
-Cracked: terr
-Cracked: loCK
-Cracked: bert
-Cracked: St3Z
+Cracked: Uz9Y
+Cracked: ZXWp
+Cracked: U3Zy
+Cracked: ZuZz
+Cracked: UPyQ
+Cracked: S9zZ
 Cracked: 6 of 6
-Elapsed: 78s
+Elapsed: 34s
 CrackSpeedy: PASS
 CrackMultiple...
-Cracked: zzyf
-Cracked: pAnd
-Cracked: terr
-Cracked: loCK
-Cracked: bert
-Cracked: St3Z
+Cracked: Uz9Y
+Cracked: ZXWp
+Cracked: U3Zy
+Cracked: ZuZz
+Cracked: UPyQ
+Cracked: S9zZ
 Cracked: 6 of 6
-Elapsed: 79s
+Elapsed: 30s
 CrackMultiple: PASS
 CrackStealthy...
+Error (null)
 Elapsed: 1s
-Max CPU: 101.0%
+Max CPU: 102.0%
 CrackStealthy: FAIL
