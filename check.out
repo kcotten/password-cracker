@@ -1,19 +1,19 @@
 CrackSingle...
-Cracked: Uz9Y
-Elapsed: 20s
+Cracked: 9999
+Elapsed: 28s
 CrackSingle: PASS
 CrackSpeedy...
-Cracked: Uz9Y
+Cracked: 9999
 Cracked: ZXWp
 Cracked: U3Zy
 Cracked: ZuZz
 Cracked: UPyQ
 Cracked: S9zZ
 Cracked: 6 of 6
-Elapsed: 34s
+Elapsed: 35s
 CrackSpeedy: PASS
 CrackMultiple...
-Cracked: Uz9Y
+Cracked: 9999
 Cracked: ZXWp
 Cracked: U3Zy
 Cracked: ZuZz
@@ -23,7 +23,7 @@ Cracked: 6 of 6
 Elapsed: 30s
 CrackMultiple: PASS
 CrackStealthy...
-Error (null)
-Elapsed: 1s
-Max CPU: 102.0%
-CrackStealthy: FAIL
+Cracked: 9999
+Elapsed: 37s
+Max CPU: 2.5%
+CrackStealthy: PASS

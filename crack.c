@@ -40,20 +40,8 @@ void* stringcopy(char* dest, const char* src);
 char* stringcopyN(char* dest, char* src, size_t n);
 int stringcompare(char* string1, char* string2);
 void* threadedCrack(void* arg);
-void crackRecursive(int fourth, char* cryptPasswd, char*testString, char* salt, char* passwd);
 
-int flag[NUMTHREADS] = {0};
 pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER;
-/*
-static pthread_mutex_t myMutex[NUMTHREADS] = {
-    PTHREAD_MUTEX_INITIALIZER,
-    PTHREAD_MUTEX_INITIALIZER,
-    PTHREAD_MUTEX_INITIALIZER,
-    PTHREAD_MUTEX_INITIALIZER,
-    PTHREAD_MUTEX_INITIALIZER,
-    PTHREAD_MUTEX_INITIALIZER,
-};
-*/
 
 static const char *charSet[NUMOFSETS] = {
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",    
@@ -108,24 +96,6 @@ void crackSingle(char *username, char *cryptPasswd, int pwlen, char *passwd) {
  */
 void crackMultiple(char *fname, int pwlen, char **passwds) {
     crackSpeedy(fname, pwlen, passwds);
-    /*
-    FILE *in = fopen(fname, "r");
-    int j = 0;
-    char* username = malloc(MAX_LEN);
-    char* cryptPasswd = malloc(MAX_LEN);
-    char* ignoredChars = malloc(MAX_LEN);
-
-    while(fscanf(in, "%[^:]%*c", username) != EOF) {
-        fscanf(in, "%[^:]%*c", cryptPasswd);
-        fscanf(in, "%[^\n]%*c", ignoredChars);
-        crackSingle(username, cryptPasswd, pwlen, passwds[j++]);
-    }
-
-    free(ignoredChars);
-    free(cryptPasswd);
-    free(username);
-    fclose(in);
-    */
 } 
 
 /*
@@ -185,13 +155,6 @@ void crackSpeedy(char *fname, int pwlen, char **passwds) {
  * percent of any processor.
  */
 void crackStealthy(char *username, char *cryptPasswd, int pwlen, char *passwd, int maxCpu) {
-    /*
-    int which = PRIO_PROCESS;
-    id_t pid;
-    int priority = 5;
-    pid = getpid();
-    setpriority(which, pid, priority);
-    */
     int wait = 0;
     struct timespec timeSpec;
     timeSpec.tv_sec = 0.0000000001;
@@ -237,89 +200,6 @@ void crackStealthy(char *username, char *cryptPasswd, int pwlen, char *passwd, i
     free(salt);
 }
 
-void crackRecursive(int fourth, char* cryptPasswd, char*testString, char* salt, char* passwd) {
-    char* hash = crypt(testString, salt);
-    if(strcmp(cryptPasswd, hash) == 0) {
-        printf("Success.\n");
-        strcpy(passwd, testString);
-        return;
-    }
-    switch(fourth) {
-        case 1:
-            //printf("1");
-            if(testString[0] == 57) {
-                testString[0] = 65;                    
-            }
-            else if(testString[0] == 90) {
-                testString[0] = 97;
-            }
-            else if(testString[0] == 122) {
-                testString[0] = 48;
-            }
-            else {
-                testString[0]++;
-                //printf(" 1 : %c ", testString[0]);
-            }
-            fourth++;
-            usleep(0.95);
-            crackRecursive(fourth, cryptPasswd, testString, salt, passwd);
-            break;
-        case 2:
-            //printf("2");
-            if(testString[1] == 57) {
-                testString[1] = 65;                    
-            }
-            else if(testString[1] == 90) {
-                testString[1] = 97;
-            }
-            else if(testString[1] == 122) {
-                testString[1] = 48;
-            }
-            else {
-                testString[1]++;
-                //printf(" 2 : %c ", testString[1]);
-            }
-            fourth++;
-            crackRecursive(fourth, cryptPasswd, testString, salt, passwd);
-            break;
-        case 3:
-            //printf("3");
-            if(testString[2] == 57) {
-                testString[2] = 65;                    
-            }
-            else if(testString[2] == 90) {
-                testString[2] = 97;
-            }
-            else if(testString[2] == 122) {
-                testString[2] = 48;
-            }
-            else {
-                testString[2]++;
-            }
-            fourth++;
-            crackRecursive(fourth, cryptPasswd, testString, salt, passwd);
-            break;
-        case 4:
-            //printf("4");
-            if(testString[3] == 57) {
-                testString[3] = 65;                    
-            }
-            else if(testString[3] == 90) {
-                testString[3] = 97;
-            }
-            else if(testString[3] == 122) {
-                testString[3] = 48;
-            }
-            else {
-                testString[3]++;
-            }
-            fourth = 1;
-            crackRecursive(fourth, cryptPasswd, testString, salt, passwd);
-            break;
-        default:
-            break;
-    }
-}
 /* 
  * Adapted from the strcpy(3) man pages this function will copy a string
  */
