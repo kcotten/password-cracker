@@ -14,11 +14,13 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/resource.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 
 #define ZERO 0
 #define MAX_LEN 160
 #define CHARSET 62
+#define HALFSET 31
 #define NUMSET  10
 #define ALPHSET 26
 #define SALT_LEN 2
@@ -148,7 +150,29 @@ void crackSpeedy(char *fname, int pwlen, char **passwds) {
     free(cryptPasswd);
     free(username);
     fclose(in);
-} 
+}
+
+void* stealthWorker(char* cryptPasswd, char*passwd) {
+    char* salt = strndup(cryptPasswd, SALT_LEN);
+    for (int a = 0; a < HALFSET; a++) {
+        for (int b = 0; b < HALFSET; b++) {
+            for (int c = 0; c < CHARSET; c++) {
+                for (int d = 0; d < CHARSET; d++) {
+                    char testString[4];
+                    testString[0] = charSet[0][a]; testString[1] = charSet[0][b];
+                    testString[2] = charSet[0][c]; testString[3] = charSet[0][d]; testString[4] = '\0';
+                    char* hash = crypt(testString, salt);
+                    if(strcmp(cryptPasswd, hash) == ZERO) {
+                        stringcopy(passwd, testString);
+                        a = b = c = d = BREAK;
+                    }
+                }
+            }
+        }
+    }
+    free(salt);
+    exit(0);
+}
 
 /*
  * Find the plain-text password PASSWD of length PWLEN for the user USERNAME 
@@ -157,51 +181,51 @@ void crackSpeedy(char *fname, int pwlen, char **passwds) {
  */
 void crackStealthy(char *username, char *cryptPasswd, int pwlen, char *passwd, int maxCpu) {
     int fd[2];
+    int fd1[2];     
     pipe(fd);
+    pipe(fd1);
     char forkString[4];
 
-    if(fork() == 0) {
-        close(fd[0]);
+    if(fork() == 0) {  
+           
+        if(fork() == 0) {
+            close(fd1[0]);
+            stealthWorker(cryptPasswd, forkString);
+            write(fd1[1], &forkString, sizeof(forkString));
+            close(fd1[1]);
+            exit(0);
+        }
+
         char* salt = strndup(cryptPasswd, SALT_LEN);
-        for (int a = 0; a < CHARSET; a++) {
-            for (int b = 0; b < CHARSET; b++) {
+        for (int a = HALFSET; a < CHARSET; a++) {
+            for (int b = HALFSET; b < CHARSET; b++) {
                 for (int c = 0; c < CHARSET; c++) {
-                    if (pwlen == 4) {
-                        for (int d = 0; d < CHARSET; d++) {
-                            char testString[4];
-                            testString[0] = charSet[0][a]; testString[1] = charSet[0][b];
-                            testString[2] = charSet[0][c]; testString[3] = charSet[0][d]; testString[4] = '\0';
-                            char* hash = crypt(testString, salt);
-                            if(strcmp(cryptPasswd, hash) == ZERO) {
-                                stringcopy(forkString, testString);
-                                write(fd[1], &forkString, sizeof(forkString));
-                                close(fd[1]);
-                                a = b = c = d = BREAK;
-                            }
-                        }
-                    } else if (pwlen == 3) {
-                        char testString[3];
+                    for (int d = 0; d < CHARSET; d++) {
+                        char testString[4];
                         testString[0] = charSet[0][a]; testString[1] = charSet[0][b];
-                        testString[2] = charSet[0][c]; testString[3] = '\0';
+                        testString[2] = charSet[0][c]; testString[3] = charSet[0][d]; testString[4] = '\0';
                         char* hash = crypt(testString, salt);
                         if(strcmp(cryptPasswd, hash) == ZERO) {
-                            stringcopy(passwd, testString);
-                            a = b = c = BREAK;
+                            stringcopy(forkString, testString);
+                            close(fd[0]);
+                            write(fd[1], &forkString, sizeof(forkString));
+                            close(fd[1]);
+                            a = b = c = d = BREAK;
                         }
-                    } else {
-                        printf("Password lengths of 3 and 4 supported only.\n");
-                        a = b = c = BREAK;
-                    }
+                    }                        
                 }
             }
         }
-        free(salt);
+        free(salt);            
     } else {
+        close(fd1[1]);
+        read(fd1[0], &forkString, sizeof(forkString));
+        close(fd1[0]);
         close(fd[1]);
         read(fd[0], &forkString, sizeof(forkString));
         close(fd[0]);
         waitpid(-1, NULL, 0);
-        strcpy(passwd, forkString);        
+        strcpy(passwd, forkString);
     }
 }
 
