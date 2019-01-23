@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/resource.h>
+#include <sys/wait.h>
 
 #define ZERO 0
 #define MAX_LEN 160
@@ -155,49 +156,53 @@ void crackSpeedy(char *fname, int pwlen, char **passwds) {
  * percent of any processor.
  */
 void crackStealthy(char *username, char *cryptPasswd, int pwlen, char *passwd, int maxCpu) {
-    int wait = 0;
-    struct timespec timeSpec;
-    timeSpec.tv_sec = 0.0000000001;
-    timeSpec.tv_nsec = 1;
-    char* salt = strndup(cryptPasswd, SALT_LEN);
-    for (int a = 0; a < CHARSET; a++) {
-        for (int b = 0; b < CHARSET; b++) {
-            for (int c = 0; c < CHARSET; c++) {
-                if (pwlen == 4) {
-                    for (int d = 0; d < CHARSET; d++) {
-                        char testString[4];
+    int fd[2];
+    pipe(fd);
+    char forkString[4];
+
+    if(fork() == 0) {
+        close(fd[0]);
+        char* salt = strndup(cryptPasswd, SALT_LEN);
+        for (int a = 0; a < CHARSET; a++) {
+            for (int b = 0; b < CHARSET; b++) {
+                for (int c = 0; c < CHARSET; c++) {
+                    if (pwlen == 4) {
+                        for (int d = 0; d < CHARSET; d++) {
+                            char testString[4];
+                            testString[0] = charSet[0][a]; testString[1] = charSet[0][b];
+                            testString[2] = charSet[0][c]; testString[3] = charSet[0][d]; testString[4] = '\0';
+                            char* hash = crypt(testString, salt);
+                            if(strcmp(cryptPasswd, hash) == ZERO) {
+                                stringcopy(forkString, testString);
+                                write(fd[1], &forkString, sizeof(forkString));
+                                close(fd[1]);
+                                a = b = c = d = BREAK;
+                            }
+                        }
+                    } else if (pwlen == 3) {
+                        char testString[3];
                         testString[0] = charSet[0][a]; testString[1] = charSet[0][b];
-                        testString[2] = charSet[0][c]; testString[3] = charSet[0][d]; testString[4] = '\0';
+                        testString[2] = charSet[0][c]; testString[3] = '\0';
                         char* hash = crypt(testString, salt);
                         if(strcmp(cryptPasswd, hash) == ZERO) {
                             stringcopy(passwd, testString);
-                            a = b = c = d = BREAK;
+                            a = b = c = BREAK;
                         }
-                        wait++;
-                        if(wait == 200) {
-                            nanosleep(&timeSpec, NULL);
-                            wait = 0;
-                        }
-                    }
-                } else if (pwlen == 3) {
-                    char testString[3];
-                    testString[0] = charSet[0][a]; testString[1] = charSet[0][b];
-                    testString[2] = charSet[0][c]; testString[3] = '\0';
-                    char* hash = crypt(testString, salt);
-                    if(strcmp(cryptPasswd, hash) == ZERO) {
-                        stringcopy(passwd, testString);
+                    } else {
+                        printf("Password lengths of 3 and 4 supported only.\n");
                         a = b = c = BREAK;
                     }
-                    //usleep(1);
-                } else {
-                    printf("Password lengths of 3 and 4 supported only.\n");
-                    a = b = c = BREAK;
                 }
             }
         }
+        free(salt);
+    } else {
+        close(fd[1]);
+        read(fd[0], &forkString, sizeof(forkString));
+        close(fd[0]);
+        waitpid(-1, NULL, 0);
+        strcpy(passwd, forkString);        
     }
-    
-    free(salt);
 }
 
 /* 
